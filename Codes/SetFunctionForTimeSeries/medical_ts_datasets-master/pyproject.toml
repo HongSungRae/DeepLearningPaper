@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "medical-ts-datasets"
+version = "0.1.0"
+description = ""
+authors = ["Max Horn <max.horn@bsse.ethz.ch>"]
+
+[tool.poetry.dependencies]
+python = ">=3.6.1,<4"
+pip = ">=19.0.0"
+setuptools = ">=41.0.0"
+tensorflow-datasets = ">=2.0.0"
+tensorflow = ">=1.15.2"
+pandas = "*"
+
+[tool.poetry.dev-dependencies]
+pytest = "^3.0"
+ipython = "^7.10"
+scikit-learn = "^0.22.0"
+
+[build-system]
+requires = ["poetry>=1.0"]
+build-backend = "poetry.masonry.api"
