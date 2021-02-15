@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
-import time
+import time as t
 from utils import time_encoding
 
 root = '/daintlab/data/sr/paper/setfunction/tensorflow_datasets/root/tensorflow_datasets/downloads/extracted/'
@@ -25,10 +25,10 @@ def get_length():
 
 
 def txt_to_csv(folder,target):
-    start = time.time()
+    start = t.time()
 
     target = pd.read_csv(target)
-    df = pd.DataFrame(np.zeros(4000,2),columns=['S','y'])
+    df = pd.DataFrame(np.zeros([4000,2]),columns=['S','y'])
 
     general_features = ["RecordID","Age","Gender","Height","ICUType","Weight"]
     features = ["Weight", "ALP", "ALT", "AST", "Albumin", "BUN", "Bilirubin", "Cholesterol",
@@ -39,49 +39,56 @@ def txt_to_csv(folder,target):
 
     txts = next(os.walk(folder))[2] #list 4000
 
-    for i in range(len(txt)):
+    for i in range(len(txts)):
         data = pd.read_csv(folder+txts[i]) # col0 : Time, col1 : Parameter, col3 : Value
-        ID = int(list(txt[i].split('.'))[0])
-        length = 0
+        ID = int(list(txts[i].split('.'))[0])
+        print(ID)
+        length = len(data)
         S_i = []
 
         '''기초정보행지우기'''
-        for j in range(len(data)):
-            time = list(map(int,data.iloc[j,0].split(':')))
+        for j in range(length):
+            time = list(map(int,data.iloc[0,0].split(':')))
             if time[0] == 0 and time[1] == 0:
-                #해당행 지우기
+                data = data.drop(data.index[0],axis=0)
             else:
                 length = len(data)
                 break
         
 
         '''time에 대한 프로세싱을 전부 해주고 mordality로 sorting'''
-        for k in range(len(data)):
+        for k in range(length):
             time = list(map(int,data.iloc[k,0].split(':')))
-            data.iloc[k,0] = #타임 프로세싱
+            data.iloc[k,0] = time_encoding(time[0],time[1],k)
             data.iloc[k,1] = features.index(data.iloc[k,1])
         else:
-            #sorting
+            # sorting
+            data = data.sort_values(['Parameter'],ascending=[False])
+            length = len(data)
 
 
 
         '''s_i = (t,z,m)꼴로 만들어 S_i에 넣고 label(target) 붙여주기
             그 다음, df에 추가하기
         '''
-        for k in range(len(data)):
+        for k in range(length):
             s_i = (data.iloc[k,0],
                    data.iloc[k,2],
                    data.iloc[k,1])
             S_i.append(s_i)
-        else:
-            target = ###
-            df.iloc[i,0] = S_i
-            df.iloc[i,1] = target
+        print(data.head(10))
+            
+        #else:
+         #   y = target['RecordID'=str(ID),'In-hospital_death']
+          #  df.iloc[i,0] = S_i # 여기 해결
+           # df.iloc[i,1] = target
     
-    print('=== Done ! ===')
-    print('Time taken : {}'.format(time.time()-start))
+    #df.to_csv(folder+"set-a.csv",header=True,index=True)
+    #print('=== Done ! ===')
+    #print('Time taken : {}'.format(t.time()-start))
+            
 
 
 if __name__=='__main__':
     #get_length()
-    #txt_to_csv(A_root+'/set-a/',A_root+'/Outcomes-a.csv')
+    txt_to_csv(A_root+'/set-a/',A_root+'/Outcomes-a.csv')

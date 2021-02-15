@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import time
+import numpy as np
 
 
 def check():
@@ -23,5 +24,19 @@ def check():
         print("=== Done ! ===")
         print('Time taken : {}'.format(time.time()-start))
 
+def time_encoding(h,m,i,tau=500):
+    t = h*60+m
+    k = i//2
+    if i%2 == 0:
+        t = np.sin(t/t**(2*k/tau))
+    else:
+        t = np.cos(t/t**(2*k/tau))
+    return t
+
+
+
+
 if __name__=='__main__':
     check()
+    t = time_encoding(10,17,30)
+    print(t)
