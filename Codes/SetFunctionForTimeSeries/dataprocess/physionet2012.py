@@ -28,7 +28,11 @@ def txt_to_csv(folder,target):
     start = t.time()
 
     target = pd.read_csv(target)
+    target_ID = list(map(int,target['RecordID'].tolist()))
+    target_y = target['In-hospital_death'].tolist()
+
     df = pd.DataFrame(np.zeros([4000,2]),columns=['S','y'])
+    df['S'] = df['S'].astype('object')
 
     general_features = ["RecordID","Age","Gender","Height","ICUType","Weight"]
     features = ["Weight", "ALP", "ALT", "AST", "Albumin", "BUN", "Bilirubin", "Cholesterol",
@@ -64,6 +68,8 @@ def txt_to_csv(folder,target):
         else:
             # sorting
             data = data.sort_values(['Parameter'],ascending=[False])
+            #결측치 있는 행 모두 버리기
+            data = data.dropna(axis=0)
             length = len(data)
 
 
@@ -76,19 +82,21 @@ def txt_to_csv(folder,target):
                    data.iloc[k,2],
                    data.iloc[k,1])
             S_i.append(s_i)
-        print(data.head(10))
+        
             
-        #else:
-         #   y = target['RecordID'=str(ID),'In-hospital_death']
-          #  df.iloc[i,0] = S_i # 여기 해결
-           # df.iloc[i,1] = target
     
-    #df.to_csv(folder+"set-a.csv",header=True,index=True)
-    #print('=== Done ! ===')
-    #print('Time taken : {}'.format(t.time()-start))
+        y = target_y[target_ID.index(ID)]
+        df.at[i,'S'] = S_i
+        df.iloc[i,1] = y
+    
+    df.to_csv(folder+"set-a.csv",header=True,index=True)
+    print('=== Done ! ===')
+    print('Time taken : {}'.format(t.time()-start))
             
 
 
 if __name__=='__main__':
     #get_length()
-    txt_to_csv(A_root+'/set-a/',A_root+'/Outcomes-a.csv')
+    #txt_to_csv(A_root+'/set-a/',A_root+'/Outcomes-a.csv')
+    txt_to_csv(B_root+'/set-b/',B_root+'/Outcomes-b.csv')
+    txt_to_csv(C_root+'/set-c/',C_root+'/Outcomes-c.csv')
