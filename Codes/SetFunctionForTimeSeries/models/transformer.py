@@ -40,7 +40,7 @@ class Generator(nn.Module):
     pass
 
 class Encoder(nn.Module):
-    def __init__(self,d_embed=3,d_k,seq_len,h1,N1):
+    def __init__(self,d_embed,d_k,seq_len,h1,N1):
         super().__init__()
         self.d_embed = d_embed
         self.d_k = d_k
@@ -51,7 +51,7 @@ class Encoder(nn.Module):
         self.list_feedforward = []
         for i in range(self.N1):
             self.list_multiheadattn.append(MultiHeadAttn(self.d_embed,self.d_k,self.seq_len,self.h1))
-            self.list_feedforward.append(FeedForward(self.d_embed,self.d_k))
+            self.list_feedforward.append(FeedForward(self.d_embed,self.d_k,self.seq_len,self.h1))
         #self.multiheadattn = MultiHeadAttn(self.d_embed,self.d_k,self.seq_len,self.h1)
         #self.feedforward = FeedForward(self.d_embed,self.d_k)
 
@@ -64,31 +64,64 @@ class Encoder(nn.Module):
 
 
 class FeedForward(nn.Module):
-    pass
+    def __init__(self,d_embed,d_k,seq_len,h1):
+        super().__init__()
+        self.d_embed = d_embed
+        self.d_k = d_k
+        self.seq_len = seq_len
+        self.h1 = h1
+        self.relu = nn.ReLU()
+        self.fc1 = FCLayer(??)
+        self.fc2 = FCLayer(??)
+        self.layer_norm = nn.LayerNorm(??)
+
+    def forward(self,x):
+        context,_ = self.fc1(x)
+        context = self.relu(context)
+        context,_ = self.fc2(context)
+        context = context + x
+        context = self.layer_norm(context??)
+        return context
 
 
 
 class MultiHeadAttn(nn.Module):
+    def __init__(self,d_embed,d_k,seq_len,h1):
+        super().__init__()
+        self.d_embed = d_embed
+        self.d_k = d_k
+        self.seq_len = seq_len
+        self.h1 = h1
+        self.sdpattn = SDPAttn(self.d_embed,self.d_k,self.seq_len,self.h1)
+        self.fc = FCLayer(??)
+        self.layer_norm = nn.LayerNorm(??)
 
     def forward(self,x): # residual and normalization
-        return outcome + x
-    pass
+        outcome = sdpattn(x)
+        outcome,_ = self.fc(outcome)
+        outcome = outcome + x
+        outcome = layer_norm(outcome??)
+        return outcome
+
+
 
 
 class SDPAttn(nn.Module):
-    def __init__(self,d_embed,d_k,h,**kwargs):
+    def __init__(self,d_embed,d_k,seq_len,h1):
         super().__init__()
+        self.d_embed = d_embed
         self.d_k = d_k
-        self.q_layer = QKV_FCLayer(d_embed,d_k*h)
-        self.k_layer = QKV_FCLayer(d_embed,d_k*h)
-        self.v_layer = QKV_FCLayer(d_embed,d_k*h)
-        self.pad_masking = PadMasking(**kwargs)
+        self.seq_len = seq_len
+        self.h1 = h1
+        self.q_layer = FCLayer(self.d_embed,self.d_k*self.h1)
+        self.k_layer = FCLayer(self.d_embed,self.d_k*self.h1)
+        self.v_layer = FCLayer(self.d_embed,self.d_k*self.h1)
+        self.pad_masking = PadMasking(self.seq_len)
     
     def forward(self,x):
         Q,_ = self.q_layer(x)
         K,_ = self.k_layer(x)
         V,n = self.v_layer(x)
-        print(n)
         outcome = torch.matmul(Q,torch.transpose(K,-1,-2))
         outcome = outcome/np.sqrt(self.d_k)
         outcome = self.pad_masking(outcome,n)
@@ -116,16 +149,18 @@ class PadMasking(nn.Module):
 
 
 
-class QKV_FCLayer(nn.Module):
+class FCLayer(nn.Module):
     def __init__(self,h,w):
         super().__init__()
         self.h = h
         self.w = w
         self.FC = torch.randn(self.h,self.w)
+        self.bias = torch.randn(self.h,self.w)
 
     def forward(self,x):
         n = x.shape[-2]
         x = torch.matmul(x,self.FC)
+        x = x + self.bias
         return x,n
 
 
