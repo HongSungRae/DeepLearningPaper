@@ -39,12 +39,14 @@ def txt_to_csv(folder,target):
                 "Creatinine", "DiasABP", "FiO2", "GCS", "Glucose", "HCO3", "HCT", "HR", "K",
                 "Lactate", "MAP", "MechVent", "Mg", "NIDiasABP", "NIMAP", "NISysABP", "Na",
                 "PaCO2", "PaO2", "Platelets", "RespRate", "SaO2", "SysABP", "Temp", "TroponinI",
-                "TroponinT", "Urine", "WBC", "pH"]
+                "TroponinT", "Urine", "WBC", "pH",None]
 
     txts = next(os.walk(folder))[2] #list 4000
 
     for i in range(len(txts)):
         data = pd.read_csv(folder+txts[i]) # col0 : Time, col1 : Parameter, col3 : Value
+        data = data.dropna(axis=0)
+
         ID = int(list(txts[i].split('.'))[0])
         print(ID)
         length = len(data)
@@ -68,8 +70,6 @@ def txt_to_csv(folder,target):
         else:
             # sorting
             data = data.sort_values(['Parameter'],ascending=[False])
-            #결측치 있는 행 모두 버리기
-            data = data.dropna(axis=0)
             length = len(data)
 
 
@@ -87,9 +87,9 @@ def txt_to_csv(folder,target):
     
         y = target_y[target_ID.index(ID)]
         df.at[i,'S'] = S_i
-        df.iloc[i,1] = y
+        df.loc[i,'y'] = y
     
-    df.to_csv(folder+"set-a.csv",header=True,index=True)
+    df.to_csv(folder+"Dset.csv",header=True,index=True)
     print('=== Done ! ===')
     print('Time taken : {}'.format(t.time()-start))
             
@@ -98,5 +98,5 @@ def txt_to_csv(folder,target):
 if __name__=='__main__':
     #get_length()
     #txt_to_csv(A_root+'/set-a/',A_root+'/Outcomes-a.csv')
-    txt_to_csv(B_root+'/set-b/',B_root+'/Outcomes-b.csv')
+    #txt_to_csv(B_root+'/set-b/',B_root+'/Outcomes-b.csv')
     txt_to_csv(C_root+'/set-c/',C_root+'/Outcomes-c.csv')
