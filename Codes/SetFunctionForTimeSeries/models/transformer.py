@@ -49,13 +49,15 @@ class Encoder(nn.Module):
         self.N1 = N1
         self.list_multiheadattn = []
         self.list_feedforward = []
+        
         for i in range(self.N1):
             self.multiheadattn = MultiHeadAttn(d_embed,d_k,seq_len,h1)
             self.feedforward = FeedForward(d_embed,d_k,seq_len,h1)
             self.list_multiheadattn.append(self.multiheadattn)
             self.list_feedforward.append(self.feedforward)
-        #self.multiheadattn = MultiHeadAttn(self.d_embed,self.d_k,self.seq_len,self.h1)
-        #self.feedforward = FeedForward(self.d_embed,self.d_k)
+        
+        #self.multiheadattn = MultiHeadAttn(d_embed,d_k,seq_len,h1)
+        #self.feedforward = FeedForward(d_embed,d_k)
 
     def forward(self,x,n):
         for i in range(self.N1):
@@ -102,7 +104,7 @@ class MultiHeadAttn(nn.Module):
 
 
 class SDPAttn(nn.Module):
-    def __init__(self,d_embed,d_k,seq_len,h1,n):
+    def __init__(self,d_embed,d_k,seq_len,h1):
         super().__init__()
         self.d_k = d_k
         self.d_model = d_k*h1
@@ -133,7 +135,7 @@ class PadMasking(nn.Module):
         self.mask_matrix = torch.ones(self.seq_len,self.seq_len) * (-10e+8)
     
     def forward(self,x,n):
-        self.mask_matrix[0:n,0:n] = x
+        self.mask_matrix[:,0:n,0:n] = x
         return self.mask_matrix
 
 
@@ -145,11 +147,11 @@ class FCLayer(nn.Module):
         self.h = h
         self.w = w
         self.matrix = torch.randn(self.h,self.w)
-        self.bias = torch.randn(self.h,self.w)
 
     def forward(self,x):
         x = torch.matmul(x,self.matrix)
-        x = x + self.bias
+        bias = torch.randn(x.size())
+        x = x + bias
         return x
 
 

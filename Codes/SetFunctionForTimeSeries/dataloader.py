@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 
@@ -26,4 +27,4 @@ class myDataLoader(Dataset):
 
 
 if __name__ == '__main__':
-    main()
+    pass
