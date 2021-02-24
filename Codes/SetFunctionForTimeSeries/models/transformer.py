@@ -5,22 +5,12 @@ import numpy as np
 import pandas as pd
 
 
-
+'''
 class Transformer(nn.Module):
-    def __init__(self,d_embed=3,d_k=3,seq_len=500,h1=8,h2=8,h3=8,N1=6,N2=6):
+    def __init__(self,d_embed=3,d_k=128,seq_len=500,h1=2,h2=2,h3=2,N1=4,N2=4):
         super().__init__()
-        # hyper-parameters #
-        self.d_embed = d_embed
-        self.d_k = d_k
-        self.seq_len = seq_len
-        self.h1 = h1
-        self.h2 = h2
-        self.h3 = h3
-        self.N1 = N1
-        self.N2 = N2
-        # # # # # # # # # # # 
-        self.encoder = Encoder(self.d_k,self.seq_len,self.h1,self.N1)
-        self.decoder = Decoder(self.h2,self.h3,self.N2)
+        self.encoder = Encoder(d_embed,d_k,seq_len,h1,N1)
+        self.decoder = Decoder(h2,h3,N2)
 
     def forward(self,x,n):
         x = self.encoder(x,n)
@@ -29,61 +19,66 @@ class Transformer(nn.Module):
 
 
 
+
 class Decoder(nn.Module):
-    def __init__(self):
+    def __init__(self,h2,h3,N2):
+        super().__init__()
         pass
     
-    def forward(self,x)
-    pass
+    def forward(self,x):
+        return None
+
 
 
 
 class Generator(nn.Module):
-    pass
+    def __init__(self):
+        super().__init__()
+        pass
+    
+    def forward(self,x):
+        return None
+'''
+
+
+
 
 class Encoder(nn.Module):
     def __init__(self,d_embed,d_k,seq_len,h1,N1):
         super().__init__()
-        self.d_embed = d_embed
-        self.d_k = d_k
-        self.seq_len = seq_len
-        self.h1 = h1
         self.N1 = N1
         self.list_multiheadattn = []
         self.list_feedforward = []
         for i in range(self.N1):
-            self.list_multiheadattn.append(MultiHeadAttn(self.d_embed,self.d_k,self.seq_len,self.h1))
-            self.list_feedforward.append(FeedForward(self.d_embed,self.d_k,self.seq_len,self.h1))
+            self.multiheadattn = MultiHeadAttn(d_embed,d_k,seq_len,h1)
+            self.feedforward = FeedForward(d_embed,d_k,seq_len,h1)
+            self.list_multiheadattn.append(self.multiheadattn)
+            self.list_feedforward.append(self.feedforward)
         #self.multiheadattn = MultiHeadAttn(self.d_embed,self.d_k,self.seq_len,self.h1)
         #self.feedforward = FeedForward(self.d_embed,self.d_k)
 
-    def forward(self,x):
+    def forward(self,x,n):
         for i in range(self.N1):
-            x = self.list_multiheadattn[i](x)
+            x = self.list_multiheadattn[i](x,n)
             x = self.list_feedforward[i](x)
         return x
 
 
 
 class FeedForward(nn.Module):
-    def __init__(self,d_embed,d_k,seq_len,h1,d_ff=10):
+    def __init__(self,d_embed,d_k,seq_len,h1,d_ff=256):
         super().__init__()
-        self.d_embed = d_embed
-        self.d_k = d_k
-        self.seq_len = seq_len
-        self.h1 = h1
-        self.d_ff = d_ff
+        self.fc1 = FCLayer(d_embed,d_ff)
         self.relu = nn.ReLU()
-        self.fc1 = FCLayer(self.d_embed,self.d_ff)
-        self.fc2 = FCLayer(self.d_ff,self.d_embed)
-        self.layer_norm = nn.LayerNorm(??)
+        self.fc2 = FCLayer(d_ff,d_embed)
+        self.layer_norm = nn.LayerNorm([seq_len,d_embed])
 
     def forward(self,x):
-        context,_ = self.fc1(x)
+        context = self.fc1(x)
         context = self.relu(context)
-        context,_ = self.fc2(context)
+        context = self.fc2(context)
         context = context + x
-        context = self.layer_norm(context??)
+        context = self.layer_norm(context)
         return context
 
 
@@ -91,19 +86,16 @@ class FeedForward(nn.Module):
 class MultiHeadAttn(nn.Module):
     def __init__(self,d_embed,d_k,seq_len,h1):
         super().__init__()
-        self.d_embed = d_embed
-        self.d_k = d_k
-        self.seq_len = seq_len
-        self.h1 = h1
-        self.sdpattn = SDPAttn(self.d_embed,self.d_k,self.seq_len,self.h1)
-        self.fc = FCLayer(self.d_k*self.h1,slef.d_embed)
-        self.layer_norm = nn.LayerNorm(??)
+        self.sdpattn = SDPAttn(d_embed,d_k,seq_len,h1)
+        self.d_model = d_k*h1
+        self.fc = FCLayer(self.d_model,d_embed)
+        self.layer_norm = nn.LayerNorm([seq_len,d_embed])
 
-    def forward(self,x): # residual and normalization
-        outcome = sdpattn(x)
-        outcome,_ = self.fc(outcome)
+    def forward(self,x,n): # residual and normalization
+        outcome = self.sdpattn(x,n)
+        outcome = self.fc(outcome)
         outcome = outcome + x
-        outcome = layer_norm(outcome??)
+        outcome = self.layer_norm(outcome)
         return outcome
 
 
@@ -112,24 +104,22 @@ class MultiHeadAttn(nn.Module):
 class SDPAttn(nn.Module):
     def __init__(self,d_embed,d_k,seq_len,h1,n):
         super().__init__()
-        self.d_embed = d_embed
         self.d_k = d_k
-        self.seq_len = seq_len
-        self.h1 = h1
-        self.n = n
-        self.q_layer = FCLayer(self.d_embed,self.d_k*self.h1)
-        self.k_layer = FCLayer(self.d_embed,self.d_k*self.h1)
-        self.v_layer = FCLayer(self.d_embed,self.d_k*self.h1)
-        self.pad_masking = PadMasking(self.seq_len,self.n)
+        self.d_model = d_k*h1
+        self.q_layer = FCLayer(d_embed,self.d_model)
+        self.k_layer = FCLayer(d_embed,self.d_model)
+        self.v_layer = FCLayer(d_embed,self.d_model)
+        self.pad_masking = PadMasking(seq_len)
+        self.softmax = nn.Softmax(dim=-1)
     
-    def forward(self,x):
-        Q,_ = self.q_layer(x)
-        K,_ = self.k_layer(x)
-        V,n = self.v_layer(x)
+    def forward(self,x,n):
+        Q = self.q_layer(x)
+        K = self.k_layer(x)
+        V = self.v_layer(x)
         outcome = torch.matmul(Q,torch.transpose(K,-1,-2))
         outcome = outcome/np.sqrt(self.d_k)
         outcome = self.pad_masking(outcome,n)
-        #행별로 softmax
+        outcome = self.softmax(outcome)
         outcome = torch.matmul(outcome,V)
         return outcome
 
@@ -137,19 +127,14 @@ class SDPAttn(nn.Module):
 
 
 class PadMasking(nn.Module):
-    def __init__(self,seq_len=500,n):
+    def __init__(self,seq_len=500):
         super().__init__()
         self.seq_len = seq_len
-        self.n = n
         self.mask_matrix = torch.ones(self.seq_len,self.seq_len) * (-10e+8)
     
-    def forward(self,x,self.n):
-        self.mask_matrix[0:n,0:n] = 1.0
-        print(self.mask_matrix[0])
-        
-        x = x*self.mask_matrix
-        return x
-
+    def forward(self,x,n):
+        self.mask_matrix[0:n,0:n] = x
+        return self.mask_matrix
 
 
 
@@ -172,10 +157,7 @@ class FCLayer(nn.Module):
 
 
 if __name__=='__main__':
-    dummy = torch.ones(500,3) # dataloader에서 가공, dataloader에서 (input_x,n,target)으로 return 받자
-    sdp = SDPAttn(3,3,8)
-    print(sdp(dummy)[-1])
+    x, n, target = (torch.randn(128,500,3),410,0)
 
-
-    model = Transformer()
-    y = model(dummy)
+    encoder = Encoder(d_embed=3,d_k=128,seq_len=500,h1=2,N1=4)
+    context = encoder(x,n)
