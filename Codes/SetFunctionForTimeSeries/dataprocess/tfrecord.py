@@ -30,12 +30,12 @@ tfrecord_path = "/daintlab/data/sr/paper/setfunction/tensorflow_datasets/root/te
 #Z:\daintlab\data\sr\paper\setfunction\tensorflow_datasets\root\tensorflow_datasets\physionet2012\1.0.10
 index_path = None
 description = None
+
+def trans(x):
+    return x
 dataset = TFRecordDataset(tfrecord_path, index_path, description)
-print(type(dataset))
 loader = torch.utils.data.DataLoader(dataset, batch_size=32)
 
-for i, data in enumerate(loader):
-    print(len(loader))
-    #x,y = data
-#data = next(iter(loader))
-#print(data)
+
+data = next(iter(loader))
+print(data)

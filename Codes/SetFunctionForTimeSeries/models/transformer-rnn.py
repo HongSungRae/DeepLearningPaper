@@ -1,3 +1,8 @@
+'''
+Encoder of transformer
+Decoder of seq2seq
+'''
+
 import torch
 from torchsummary import summary
 import torch.nn as nn
@@ -6,14 +11,14 @@ import pandas as pd
 
 
 
-class Transformer(nn.Module):
+class Transformer_RNN(nn.Module):
     def __init__(self,d_embed=3,d_k=128,seq_len=500,h1=2,h2=2,h3=2,N1=4,N2=4):
         super().__init__()
         self.encoder = Encoder(d_embed,d_k,seq_len,h1,N1)
         self.decoder = Decoder(h2,h3,N2)
 
     def forward(self,x,n):
-        x = self.encoder(x,n)
+        x = self.encoder(x,n) #(batch,seq_len,d_embed)
         x = self.decoder(x)
         return x
 
@@ -30,7 +35,7 @@ class Decoder(nn.Module):
 
 
 
-'''
+
 class Generator(nn.Module):
     def __init__(self):
         super().__init__()
@@ -38,7 +43,7 @@ class Generator(nn.Module):
     
     def forward(self,x):
         return None
-'''
+
 
 
 

@@ -24,7 +24,7 @@ def get_length():
 
 
 
-def txt_to_csv(folder,target):
+def txt_to_csv(folder,target,filename):
     start = t.time()
 
     target = pd.read_csv(target)
@@ -40,6 +40,8 @@ def txt_to_csv(folder,target):
                 "Lactate", "MAP", "MechVent", "Mg", "NIDiasABP", "NIMAP", "NISysABP", "Na",
                 "PaCO2", "PaO2", "Platelets", "RespRate", "SaO2", "SysABP", "Temp", "TroponinI",
                 "TroponinT", "Urine", "WBC", "pH",None]
+    exclusion = [140501, 150649, 140936, 143656, 141264, 145611,
+                 142998, 147514, 142731, 150309, 155655, 156254]
 
     txts = next(os.walk(folder))[2] #list 4000
 
@@ -48,6 +50,8 @@ def txt_to_csv(folder,target):
         data = data.dropna(axis=0)
 
         ID = int(list(txts[i].split('.'))[0])
+        if ID in exclusion:
+            continue
         print(ID)
         length = len(data)
         S_i = []
@@ -89,7 +93,7 @@ def txt_to_csv(folder,target):
         df.at[i,'S'] = S_i
         df.loc[i,'y'] = y
     
-    df.to_csv(folder+"Dset.csv",header=True,index=True)
+    df.to_csv(folder + filename + ".csv",header=True,index=True)
     print('=== Done ! ===')
     print('Time taken : {}'.format(t.time()-start))
             
@@ -97,6 +101,6 @@ def txt_to_csv(folder,target):
 
 if __name__=='__main__':
     #get_length()
-    #txt_to_csv(A_root+'/set-a/',A_root+'/Outcomes-a.csv')
-    #txt_to_csv(B_root+'/set-b/',B_root+'/Outcomes-b.csv')
-    txt_to_csv(C_root+'/set-c/',C_root+'/Outcomes-c.csv')
+    #txt_to_csv(A_root+'/set-a/',A_root+'/Outcomes-a.csv','A-dataset')
+    #txt_to_csv(B_root+'/set-b/',B_root+'/Outcomes-b.csv','B-dataset')
+    txt_to_csv(C_root+'/set-c/',C_root+'/Outcomes-c.csv','C-dataset')

@@ -24,6 +24,7 @@ def check():
         print("=== Done ! ===")
         print('Time taken : {}'.format(time.time()-start))
 
+
 def time_encoding(h,m,i,tau=500):
     t = h*60+m
     k = i//2
