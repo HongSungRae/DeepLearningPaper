@@ -7,7 +7,7 @@ import pandas as pd
 
 
 class Transformer(nn.Module):
-    def __init__(self,d_embed=3,d_k=128,seq_len=512,h1=2,h2=2,h3=2,N1=4,N2=4):
+    def __init__(self,d_embed=3,d_k=128,seq_len=1024,h1=2,h2=2,h3=2,N1=4,N2=4):
         super().__init__()
         self.encoder = Encoder(d_embed,d_k,seq_len,h1,N1)
         self.linear1 =  nn.Linear(seq_len*d_embed,1024)
@@ -161,18 +161,19 @@ class PadMasking(nn.Module):
     def __init__(self,seq_len):
         super().__init__()
         self.seq_len = seq_len
-        self.mask_matrix = torch.ones(self.seq_len,self.seq_len) * (-10e+8)
+        self.mask_matrix = torch.ones(self.seq_len,self.seq_len,device='cuda') * (-10e+8)
     
     def forward(self,x,n):
+        print(type(n))
         if len(x.shape) == 3:
-            for i in range(x.shape[0]):
+            batch = x.shape[0]
+            for i in range(batch):
                 temp = self.mask_matrix
-                temp[0:n,0:n] = x[i,0:n,0:n]
+                temp[0:n,0:n] = x[i,:int(n[i]),:int(n[i])]
                 x[i] = temp
             return x
         else:
             self.mask_matrix[0:n,0:n] = x[0:n,0:n]
-            return self.mask_matrix
 
 
 
@@ -182,10 +183,15 @@ class FCLayer(nn.Module):
         self.h = h
         self.w = w
         self.matrix = torch.randn(self.h,self.w)
+        self.is_cuda = torch.cuda.is_available()
+        #self.device = torch.device('cuda' if self.is_cuda else 'cpu')
 
     def forward(self,x):
         x = torch.matmul(x,self.matrix)
-        bias = torch.randn(x.size())
+        if x.get_device()==0:
+            bias = torch.randn(x.size(),device='cuda')
+        else:
+            bias = torch.randn(x.size())
         x = x + bias
         return x
 
@@ -194,7 +200,7 @@ class FCLayer(nn.Module):
 
 
 if __name__=='__main__':
-    x, n, target = (torch.randn(128,512,3),410,0)
+    x, n, target = (torch.randn([128,1024,3]),410,0)
     '''
     encoder = Encoder(d_embed=3,d_k=128,seq_len=512,h1=2,N1=4)
     context = encoder(x,n)

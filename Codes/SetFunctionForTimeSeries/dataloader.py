@@ -5,7 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 
 
-class myDataLoader(Dataset):
+class MyDataLoader(Dataset):
     def __init__(self,df,seq_len,d_embed=3):
         self.df = df
         self.seq_len = seq_len
@@ -30,7 +30,7 @@ class myDataLoader(Dataset):
 if __name__ == '__main__':
     df = pd.read_csv('/daintlab/data/sr/paper/setfunction/tensorflow_datasets/root/tensorflow_datasets/downloads/extracted/A/set-a/A-dataset.csv')
     print(df.head())
-    dataset = myDataLoader(df,1024)
+    dataset = MyDataLoader(df,1024)
     dataloader = DataLoader(dataset, shuffle=False, batch_size=64, pin_memory=False)
 
     x, n, target = next(iter(dataloader))
