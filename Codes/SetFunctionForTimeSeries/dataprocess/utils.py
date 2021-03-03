@@ -32,7 +32,7 @@ def time_encoding(h,m,i,tau=500):
         t = np.sin(t/t**(2*k/tau))
     else:
         t = np.cos(t/t**(2*k/tau))
-    return t
+    return round(t,6)
 
 
 

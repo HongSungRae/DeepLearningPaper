@@ -1,8 +1,3 @@
-'''
-Encoder of transformer
-Decoder of seq2seq
-'''
-
 import torch
 from torchsummary import summary
 import torch.nn as nn
@@ -11,38 +6,36 @@ import pandas as pd
 
 
 
-class Transformer_RNN(nn.Module):
-    def __init__(self,d_embed=3,d_k=128,seq_len=500,h1=2,h2=2,h3=2,N1=4,N2=4):
+class Transformer(nn.Module):
+    def __init__(self,d_embed=3,d_k=128,seq_len=512,h1=2,h2=2,h3=2,N1=4,N2=4):
         super().__init__()
         self.encoder = Encoder(d_embed,d_k,seq_len,h1,N1)
-        self.decoder = Decoder(h2,h3,N2)
+        self.linear1 =  nn.Linear(seq_len*d_embed,1024)
+        self.relu = nn.ReLU()
+        self.linear2 = nn.Linear(1024,1)
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self,x,n):
-        x = self.encoder(x,n) #(batch,seq_len,d_embed)
-        x = self.decoder(x)
-        return x
+        c = self.encoder(x,n)
+        c = c.reshape(c.shape[0],-1)
+        y_pred = self.linear1(c)
+        y_pred = self.relu(y_pred)
+        y_pred = self.linear2(y_pred)
+        y_pred = self.sigmoid(y_pred)
+        return y_pred
 
 
 
 
-class Decoder(nn.Module):
-    def __init__(self,h2,h3,N2):
+
+class Masked_MultiHeadAttn(nn.Module):
+    def __init__(self,d_embed,d_k,seq_len,h1):
         super().__init__()
-        pass
+        self.masked_multiheadattn = MultiHeadAttn(d_embed,d_k,seq_len,h1,decoding=True)
     
-    def forward(self,x):
-        return None
-
-
-
-
-class Generator(nn.Module):
-    def __init__(self):
-        super().__init__()
-        pass
-    
-    def forward(self,x):
-        return None
+    def forward(self,x,n):
+        outcome = self.masked_multiheadattn(x,n)
+        return outcome
 
 
 
@@ -72,6 +65,8 @@ class Encoder(nn.Module):
 
 
 
+
+
 class FeedForward(nn.Module):
     def __init__(self,d_embed,d_k,seq_len,h1,d_ff=256):
         super().__init__()
@@ -90,10 +85,12 @@ class FeedForward(nn.Module):
 
 
 
+
+
 class MultiHeadAttn(nn.Module):
-    def __init__(self,d_embed,d_k,seq_len,h1):
+    def __init__(self,d_embed,d_k,seq_len,h1,decoding=False):
         super().__init__()
-        self.sdpattn = SDPAttn(d_embed,d_k,seq_len,h1)
+        self.sdpattn = SDPAttn(d_embed,d_k,seq_len,h1,decoding)
         self.d_model = d_k*h1
         self.fc = FCLayer(self.d_model,d_embed)
         self.layer_norm = nn.LayerNorm([seq_len,d_embed])
@@ -109,23 +106,32 @@ class MultiHeadAttn(nn.Module):
 
 
 class SDPAttn(nn.Module):
-    def __init__(self,d_embed,d_k,seq_len,h1):
+    def __init__(self,d_embed,d_k,seq_len,h1,decoding):
         super().__init__()
         self.d_k = d_k
         self.d_model = d_k*h1
+        self.decoding = decoding
         self.q_layer = FCLayer(d_embed,self.d_model)
         self.k_layer = FCLayer(d_embed,self.d_model)
         self.v_layer = FCLayer(d_embed,self.d_model)
         self.pad_masking = PadMasking(seq_len)
+        self.sub_masking = SubMasking(seq_len)
         self.softmax = nn.Softmax(dim=-1)
     
-    def forward(self,x,n):
-        Q = self.q_layer(x)
-        K = self.k_layer(x)
-        V = self.v_layer(x)
+    def forward(self,x,n,c=None,**kargs):
+        if c == None:
+            Q = self.q_layer(x)
+            K = self.k_layer(x)
+            V = self.v_layer(x)
+        else:
+            Q = self.q_layer(c)
+            K = self.k_layer(c)
+            V = self.v_layer(x)
         outcome = torch.matmul(Q,torch.transpose(K,-1,-2))
         outcome = outcome/np.sqrt(self.d_k)
         outcome = self.pad_masking(outcome,n)
+        if self.decoding == True:
+            outcome = self.sub_masking(outcome,n)
         outcome = self.softmax(outcome)
         outcome = torch.matmul(outcome,V)
         return outcome
@@ -133,8 +139,26 @@ class SDPAttn(nn.Module):
 
 
 
-class PadMasking(nn.Module):
+class SubMasking(nn.Module):
     def __init__(self,seq_len=500):
+        super().__init__()
+        self.seq_len = seq_len
+
+    def forward(self,x,n):
+        if len(x.shape) == 3:
+            for i in range(x.shape[0]):
+                for j in range(n-1):
+                    x[i,j,j+1:] = -10e+8
+        else:
+            for j in range(n-1):
+                x[j,j+1:] = -10e+8
+        
+        return x
+
+
+
+class PadMasking(nn.Module):
+    def __init__(self,seq_len):
         super().__init__()
         self.seq_len = seq_len
         self.mask_matrix = torch.ones(self.seq_len,self.seq_len) * (-10e+8)
@@ -149,7 +173,6 @@ class PadMasking(nn.Module):
         else:
             self.mask_matrix[0:n,0:n] = x[0:n,0:n]
             return self.mask_matrix
-
 
 
 
@@ -171,8 +194,13 @@ class FCLayer(nn.Module):
 
 
 if __name__=='__main__':
-    x, n, target = (torch.randn(128,500,3),410,0)
-
-    encoder = Encoder(d_embed=3,d_k=128,seq_len=500,h1=2,N1=4)
+    x, n, target = (torch.randn(128,512,3),410,0)
+    '''
+    encoder = Encoder(d_embed=3,d_k=128,seq_len=512,h1=2,N1=4)
     context = encoder(x,n)
-    print(context.shape)
+    print('context :' ,context.shape)
+    '''
+    transformer = Transformer()
+    y_pred = transformer(x,n)
+    print('y_pred :',y_pred.shape)
+    print(y_pred)

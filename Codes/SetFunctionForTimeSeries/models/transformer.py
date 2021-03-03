@@ -50,7 +50,10 @@ class Decoder(nn.Module):
         output = self.relu(output)
         output = self.fc2(output)
         output = self.sigmoid(output) # 0 < x < 1
-        return x
+        return output
+
+
+
 
 
 class DecoderMultiHeadAttn(nn.Module):
@@ -70,6 +73,8 @@ class DecoderMultiHeadAttn(nn.Module):
 
 
 
+
+
 class Masked_MultiHeadAttn(nn.Module):
     def __init__(self,d_embed,d_k,seq_len,h1):
         super().__init__()
@@ -78,6 +83,7 @@ class Masked_MultiHeadAttn(nn.Module):
     def forward(self,x,n):
         outcome = self.masked_multiheadattn(x,n)
         return outcome
+
 
 
 
@@ -106,6 +112,8 @@ class Encoder(nn.Module):
 
 
 
+
+
 class FeedForward(nn.Module):
     def __init__(self,d_embed,d_k,seq_len,h1,d_ff=256):
         super().__init__()
@@ -121,6 +129,8 @@ class FeedForward(nn.Module):
         context = context + x
         context = self.layer_norm(context)
         return context
+
+
 
 
 
@@ -176,6 +186,7 @@ class SDPAttn(nn.Module):
 
 
 
+
 class PadMasking(nn.Module):
     def __init__(self,seq_len=500):
         super().__init__()
@@ -194,6 +205,8 @@ class PadMasking(nn.Module):
             return self.mask_matrix
 
 
+
+
 class SubMasking(nn.Module):
     def __init__(self,seq_len=500):
         super().__init__()
@@ -209,6 +222,9 @@ class SubMasking(nn.Module):
                 x[j,j+1:] = -10e+8
         
         return x
+
+
+
 
 
 
@@ -234,7 +250,7 @@ if __name__=='__main__':
 
     encoder = Encoder(d_embed=3,d_k=128,seq_len=500,h1=2,N1=4)
     context = encoder(x,n)
-    print('contxt :' ,context.shape)
+    print('context :' ,context.shape)
 
     transformer = Transformer()
     y_pred = transformer(x,n)

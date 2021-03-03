@@ -101,6 +101,6 @@ def txt_to_csv(folder,target,filename):
 
 if __name__=='__main__':
     #get_length()
-    #txt_to_csv(A_root+'/set-a/',A_root+'/Outcomes-a.csv','A-dataset')
-    #txt_to_csv(B_root+'/set-b/',B_root+'/Outcomes-b.csv','B-dataset')
+    txt_to_csv(A_root+'/set-a/',A_root+'/Outcomes-a.csv','A-dataset')
+    txt_to_csv(B_root+'/set-b/',B_root+'/Outcomes-b.csv','B-dataset')
     txt_to_csv(C_root+'/set-c/',C_root+'/Outcomes-c.csv','C-dataset')
