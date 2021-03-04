@@ -29,7 +29,7 @@ def train_model(model,dataloader,epoch):
             
             if is_cuda:
                 x = x.float().cuda()
-                n = n.float().cuda()
+                #n = n.float().cuda()
                 target = target.float().cuda()
             
             optimizer.zero_grad()

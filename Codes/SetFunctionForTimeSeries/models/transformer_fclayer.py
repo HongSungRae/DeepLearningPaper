@@ -59,6 +59,7 @@ class Encoder(nn.Module):
 
     def forward(self,x,n):
         for i in range(self.N1):
+            print(i)
             x = self.list_multiheadattn[i](x,n)
             x = self.list_feedforward[i](x)
         return x
@@ -164,16 +165,19 @@ class PadMasking(nn.Module):
         self.mask_matrix = torch.ones(self.seq_len,self.seq_len,device='cuda') * (-10e+8)
     
     def forward(self,x,n):
-        print(type(n))
+        print(x.shape)
+        print(n.shape)
         if len(x.shape) == 3:
             batch = x.shape[0]
             for i in range(batch):
+                idx = int(n[i].tolist())
                 temp = self.mask_matrix
-                temp[0:n,0:n] = x[i,:int(n[i]),:int(n[i])]
+                temp[0:idx,0:idx] = x[i,0:idx,0:idx]
                 x[i] = temp
             return x
         else:
             self.mask_matrix[0:n,0:n] = x[0:n,0:n]
+            return self.mask_matrix
 
 
 
@@ -183,14 +187,16 @@ class FCLayer(nn.Module):
         self.h = h
         self.w = w
         self.matrix = torch.randn(self.h,self.w)
+        self.matrix_cuda = torch.randn(self.h,self.w,device='cuda')
         self.is_cuda = torch.cuda.is_available()
         #self.device = torch.device('cuda' if self.is_cuda else 'cpu')
 
     def forward(self,x):
-        x = torch.matmul(x,self.matrix)
         if x.get_device()==0:
+            x = torch.matmul(x,self.matrix_cuda)
             bias = torch.randn(x.size(),device='cuda')
         else:
+            x = torch.matmul(x,self.matrix)
             bias = torch.randn(x.size())
         x = x + bias
         return x
