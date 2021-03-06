@@ -29,7 +29,6 @@ def train_model(model,dataloader,epoch):
         for i,data in enumerate(dataloader):
             count += 1
             x, n, target = data
-            target = target.view(target.shape[-1],-1)
             
             if is_cuda:
                 x = x.float().cuda()

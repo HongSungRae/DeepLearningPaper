@@ -19,10 +19,12 @@ class MyDataLoader(Dataset):
         temp_x = self.df.iloc[index,1] #str
         temp_x = eval(temp_x) # '[(),(),()]' -> eval -> [(),(),()]
         temp_x = torch.FloatTensor(temp_x)
+        #n = torch.tensor(len(temp_x)).view(-1)
         n = len(temp_x)
         x = torch.ones(self.seq_len,self.d_embed)
         x[0:n] = temp_x
-        target = torch.tensor(self.df.iloc[index,2])
+        #target = torch.tensor(self.df.iloc[index,2]).view(-1)
+        target = self.df.iloc[index,2]
         return x, n, target
 
 
@@ -35,5 +37,5 @@ if __name__ == '__main__':
 
     x, n, target = next(iter(dataloader))
     print("x.shape :",x.shape)
-    print("n :",n)
-    print("target :",target)
+    print("n :",n.shape)
+    print("target :",target.shape)
