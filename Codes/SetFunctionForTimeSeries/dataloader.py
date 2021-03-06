@@ -22,7 +22,7 @@ class MyDataLoader(Dataset):
         n = len(temp_x)
         x = torch.ones(self.seq_len,self.d_embed)
         x[0:n] = temp_x
-        target = self.df.iloc[index,2]
+        target = torch.tensor(self.df.iloc[index,2])
         return x, n, target
 
 

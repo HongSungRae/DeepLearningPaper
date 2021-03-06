@@ -59,7 +59,6 @@ class Encoder(nn.Module):
 
     def forward(self,x,n):
         for i in range(self.N1):
-            print(i)
             x = self.list_multiheadattn[i](x,n)
             x = self.list_feedforward[i](x)
         return x
@@ -116,7 +115,6 @@ class SDPAttn(nn.Module):
         self.k_layer = FCLayer(d_embed,self.d_model)
         self.v_layer = FCLayer(d_embed,self.d_model)
         self.pad_masking = PadMasking(seq_len)
-        self.sub_masking = SubMasking(seq_len)
         self.softmax = nn.Softmax(dim=-1)
     
     def forward(self,x,n,c=None,**kargs):
@@ -131,30 +129,12 @@ class SDPAttn(nn.Module):
         outcome = torch.matmul(Q,torch.transpose(K,-1,-2))
         outcome = outcome/np.sqrt(self.d_k)
         outcome = self.pad_masking(outcome,n)
-        if self.decoding == True:
-            outcome = self.sub_masking(outcome,n)
         outcome = self.softmax(outcome)
         outcome = torch.matmul(outcome,V)
         return outcome
 
 
 
-
-class SubMasking(nn.Module):
-    def __init__(self,seq_len=500):
-        super().__init__()
-        self.seq_len = seq_len
-
-    def forward(self,x,n):
-        if len(x.shape) == 3:
-            for i in range(x.shape[0]):
-                for j in range(n-1):
-                    x[i,j,j+1:] = -10e+8
-        else:
-            for j in range(n-1):
-                x[j,j+1:] = -10e+8
-        
-        return x
 
 
 
@@ -165,20 +145,18 @@ class PadMasking(nn.Module):
         self.mask_matrix = torch.ones(self.seq_len,self.seq_len,device='cuda') * (-10e+8)
     
     def forward(self,x,n):
-        print(x.shape)
-        print(n.shape)
         if len(x.shape) == 3:
             batch = x.shape[0]
             for i in range(batch):
                 idx = int(n[i].tolist())
-                temp = self.mask_matrix
+                temp = self.mask_matrix # 스와핑과정 gpu에서 메모리 어드레싱 문제
+                                        # 텐서값을 clone (doc찾아라)
                 temp[0:idx,0:idx] = x[i,0:idx,0:idx]
                 x[i] = temp
             return x
         else:
             self.mask_matrix[0:n,0:n] = x[0:n,0:n]
             return self.mask_matrix
-
 
 
 class FCLayer(nn.Module):
@@ -206,7 +184,9 @@ class FCLayer(nn.Module):
 
 
 if __name__=='__main__':
-    x, n, target = (torch.randn([128,1024,3]),410,0)
+    x, n, target = (torch.randn([128,1024,3])
+                    ,torch.tensor([410 for i in range(128)]).view(128,1)
+                    ,torch.zeros(128,1))
     '''
     encoder = Encoder(d_embed=3,d_k=128,seq_len=512,h1=2,N1=4)
     context = encoder(x,n)
