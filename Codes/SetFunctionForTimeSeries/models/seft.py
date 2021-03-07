@@ -1,9 +1,13 @@
 import torch
 import numpy as np
 import torch.nn as nn
-from torch.summary import summary
+from torchsummary import summary
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+from dataloader import MyDataLoader
 
-
+"""
 class CLASS_(nn.Module):
     def __init__(self):
         super().__init__()
@@ -93,7 +97,15 @@ class Attention(nn.Module):
 
 
 
-
+"""
 
 if __name__ == '__main__':
-    pass
+    df = pd.read_csv('/daintlab/data/sr/paper/setfunction/tensorflow_datasets/root/tensorflow_datasets/downloads/extracted/A/set-a/A-dataset.csv')
+    print(df.head())
+    dataset = MyDataLoader(df,1024)
+    dataloader = DataLoader(dataset, shuffle=False, batch_size=64, pin_memory=False)
+    x, n, target = next(iter(dataloader))
+    
+    model = SeFT()
+    y = model(x,n)
+    print(y)
