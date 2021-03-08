@@ -18,7 +18,7 @@ class CLASS_(nn.Module):
         return None
 
 
-"""
+
 class SeFT(nn.Module):
     def __init__(self,m=4):
         super().__init__()
@@ -38,13 +38,14 @@ class SeFT(nn.Module):
         e = self.set_function(x,n) # shape : (bs,2)
         e = self.attention(e,n,x)
         # ▼ decoding process
+        e = e.view(e.shape[0],-1)
         e = self.relu1(self.fc1(e))
         e = self.dropout(e)
         e = self.relu2(self.fc2(e))
         e = self.fc3(e)
         y = self.sigmoid(e)
         return y
-"""
+
 
 
 class SetFunc(nn.Module):
@@ -110,24 +111,41 @@ class Attention(nn.Module):
         super().__init__()
         self.m = m
         self.d = d
+        self.h1 = H()
+        self.h2 = H()
+        self.h3 = H()
+        self.h4 = H()
+        self.softmax = nn.Softmax(dim=1)
+        self.h_list = [self.h1,self.h2,self.h3,self.h4]
         self.r_asterisk = []
     
     def forward(self,f_S,n,x):
-        bs = n.shape[0]
+        bs = x.shape[0]
         n_list = n.tolist()
-        query = torch.zeros(x.shape[0],self.m,self.d)
-        for k in range(bs):#생각해보니 그냥 고정 size로 박아버리고 zero padding주면 어떨까
+        query = torch.zeros(bs,self.m,self.d)
         for i in range(self.m):
-            # f_S를 늘려주고 x와 concat
-            # n.tolist()[62][0]
+            matrix = torch.zeros(bs,1024,5)
+            matrix[0:,0:,0:2] = f_S.view(bs,1,2)
+            matrix[0:,0:,2:] = x
+            weight = torch.randn(5,self.d)
             key = torch.matmul(matrix,weight)
-            = ??/np.sqrt(self.d)
-            self.r_asterisk.append(r)
+            e_ji = torch.sum(key[0:,0:,0:]*query[0:,0,0:].view(64,1,128),2).view(bs,1024,1)/np.sqrt(self.d)
+            for j in range(bs): # Masking
+                length = n_list[j][0]
+                e_ji[j,length:,0] = -1000.0
+            a_ji = self.softmax(e_ji) # [64,1024,1]
+            h_s = self.h_list[i](x) # [64,128]
+            # r_i 만들기
+            r_i = torch.zeros(64,128)
+            for k in range(bs):
+                temp = torch.sum(e_ji[i]*h_s[i],dim=0)
+                r_i[i] = temp
+            self.r_asterisk.append(r_i)
         else: 
             concat_r = self.r_asterisk[0]
     
-        for j in range(self.m-1):
-            concat_r = torch.cat((concat_r,self.r_asterisk[i+1]),dim=1)
+        for l in range(self.m-1):
+            concat_r = torch.cat((concat_r,self.r_asterisk[l+1]),dim=1)
         return concat_r
 
 
@@ -142,7 +160,6 @@ if __name__ == '__main__':
     dataloader = DataLoader(dataset, shuffle=False, batch_size=64, pin_memory=False)
     x, n, target = next(iter(dataloader))
     
-    #model = SeFT()
-    model = SetFunc()
+    model = SeFT()
     y = model(x,n)
     print(y)

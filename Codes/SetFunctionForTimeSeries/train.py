@@ -1,4 +1,5 @@
 from models.transformer_fclayer import Transformer
+from models.seft import SeFT
 from dataloader import MyDataLoader
 from utils import *
 import torch
@@ -29,18 +30,20 @@ def train_model(model,dataloader,epoch):
         for i,data in enumerate(dataloader):
             count += 1
             x, n, target = data
-            
+            '''
             if is_cuda:
                 x = x.float().cuda()
                 #n = n.float().cuda()
                 target = target.float().cuda()
-            
+            '''
             optimizer.zero_grad()
             y_hat = model(x,n)
-            loss = criterion(y_hat,target) # hat이 먼저 target이 나중에 와야한다
+            print(y_hat.shape)
+            loss = criterion(y_hat.float(),target.float()) # hat이 먼저 target이 나중에 와야한다
             loss_learning += loss
             sum_loss += loss
-            loss.backward()
+            torch.autograd.set_detect_anomaly(True)
+            loss.backward(retain_graph=True)
             optimizer.step()
            
             if i % 10 == 9:    # print every 10 mini-batches
@@ -55,10 +58,11 @@ def train_model(model,dataloader,epoch):
 
 
 if __name__ == '__main__':
-    model = Transformer().cuda()
+    #model = Transformer().cuda()
+    model = SeFT()
     df = pd.read_csv('/daintlab/data/sr/paper/setfunction/tensorflow_datasets/root/tensorflow_datasets/downloads/extracted/A/set-a/A-dataset.csv')
     dataset = MyDataLoader(df,1024)
-    dataloader = DataLoader(dataset, shuffle=False, batch_size=1)
+    dataloader = DataLoader(dataset, shuffle=False, batch_size=64)
 
     trained_model, train_loss_list = train_model(model,dataloader,30)
     print(train_loss_list)

@@ -19,9 +19,10 @@ class MyDataLoader(Dataset):
         temp_x = self.df.iloc[index,1] #str
         temp_x = eval(temp_x) # '[(),(),()]' -> eval -> [(),(),()]
         temp_x = torch.FloatTensor(temp_x)
+        #temp_x = torch.tensor(temp_x,dtype=torch.float, requires_grad=True)
         n = torch.tensor(len(temp_x)).view(-1)
         #n = len(temp_x)
-        x = torch.ones(self.seq_len,self.d_embed)
+        x = torch.zeros(self.seq_len,self.d_embed)
         x[0:len(temp_x)] = temp_x
         target = torch.tensor(self.df.iloc[index,2]).view(-1)
         #target = self.df.iloc[index,2]
