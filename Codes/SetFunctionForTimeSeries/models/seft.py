@@ -41,7 +41,8 @@ class SeFT(nn.Module):
         bs = x.shape[0]
         ###
         is_cuda = torch.cuda.is_available()
-        device = torch.device('cuda' if is_cuda else 'cpu')
+        #device = torch.device('cuda' if is_cuda else 'cpu')
+        device = torch.device(3)
         query = torch.zeros(bs,self.m,self.d)
         if is_cuda:
             query = query.float().to(device)
@@ -132,7 +133,8 @@ class Attention(nn.Module):
     def forward(self,f_S,n,x,query):
         #####
         is_cuda = torch.cuda.is_available()
-        device = torch.device('cuda' if is_cuda else 'cpu')
+        #device = torch.device('cuda' if is_cuda else 'cpu')
+        device = torch.device(3)
         #####
 
         bs = x.shape[0]
@@ -142,13 +144,13 @@ class Attention(nn.Module):
         matrix[0:,0:,0:2] = f_S.view(bs,1,2)
         matrix[0:,0:,2:] = x
         weight = torch.randn(5,self.d)
-        r_i = torch.zeros(64,128)
+        r_i = torch.zeros(bs,128)
         if is_cuda:
             matrix = matrix.float().to(device)
             weight = weight.float().to(device)
             r_i = r_i.float().to(device)
         key = torch.matmul(matrix,weight)
-        e_ji = torch.sum(key[0:,0:,0:]*query[0:,0,0:].view(64,1,128),2).view(bs,1024,1)/np.sqrt(self.d)
+        e_ji = torch.sum(key[0:,0:,0:]*query[0:,0,0:].view(bs,1,128),2).view(bs,1024,1)/np.sqrt(self.d)
         for j in range(bs): # Masking
             length = int(n_list[j][0])
             e_ji[j,length:,0] = -1000.0

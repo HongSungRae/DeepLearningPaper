@@ -48,12 +48,13 @@ def txt_to_csv(folder,target,filename):
     for i in range(len(txts)):
         data = pd.read_csv(folder+txts[i]) # col0 : Time, col1 : Parameter, col3 : Value
         data = data.dropna(axis=0)
-
+        length = len(data)
         ID = int(list(txts[i].split('.'))[0])
+        
         if ID in exclusion:
             continue
+
         print(ID)
-        length = len(data)
         S_i = []
 
         '''기초정보행지우기'''

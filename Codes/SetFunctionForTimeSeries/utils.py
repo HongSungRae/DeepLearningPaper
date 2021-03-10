@@ -10,6 +10,15 @@ def cuda_checker():
     print ('Current cuda device ', torch.cuda.current_device())
     print(torch.cuda.get_device_name(device))
 
+
+def load_model(model_name):
+    PATH = '/daintlab/data/sr/paper/setfunction/trained_models/'
+    model = torch.load(PATH+model_name)
+    model.eval()
+    return model
+
 if __name__ == '__main__':
     print(torch.__version__)
     cuda_checker()
+
+    model = load_model('SeFT_01.pt')
