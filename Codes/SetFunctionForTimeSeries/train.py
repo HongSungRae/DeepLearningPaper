@@ -92,6 +92,7 @@ if __name__ == '__main__':
     df_b = pd.read_csv(PATH + 'B/set-b/B-dataset.csv')
     dataset_b = MyDataLoader(df_b,1024)
     dataloader_b = DataLoader(dataset_b, shuffle=False, batch_size=64,drop_last=True)
+    model = load_model('SeFT_01.pt').cuda(device)
     train_loss_list = train_and_save(model,dataloader_b,30,"SeFT_02.pt")
     print(train_loss_list)
     ##################

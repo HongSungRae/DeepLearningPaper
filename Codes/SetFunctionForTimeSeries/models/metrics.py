@@ -14,7 +14,7 @@ metrics.py contains this kinds of metrics
 """
 
 def get_1_or_0(y_hat):
-    bs = y.shape[0]
+    bs = y_hat.shape[0]
     for i in range(bs):
         if y_hat[i] > 0.5:
             y_hat[i] = 1.0
@@ -42,10 +42,12 @@ def confuse_matrix(y,y_hat):
             tn += 1
         else:
             fp += 1
+    #print(tp,tn,fp,fn,tp+tn+fp+fn)
+    eps = 1e-3
     accuracy = (tp+tn)/bs
-    precision = tp/(tp+fp)
-    recall = tp/(tp+fn)
-    f1 = 2*(precision*recall)/(precision+recall)
+    precision = tp/(tp+fp+eps)
+    recall = tp/(tp+fn+eps)
+    f1 = 2*(precision*recall)/(precision+recall+eps)
     return accuracy, precision, recall, f1
 
 
