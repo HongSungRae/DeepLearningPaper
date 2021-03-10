@@ -61,7 +61,7 @@ def auprc(precision,recall):
     for i in range(1, len(auprc_precision)):
         temp_auprc = (auprc_Precision[i - 1] + auprc_precision[i]) * (auprc_recall[i] - auprc_recall[i - 1]) / 2
         auprc += temp_auprc
-    return None
+    return precision_list, recall_list
 
 
 def auroc(y,y_hat):

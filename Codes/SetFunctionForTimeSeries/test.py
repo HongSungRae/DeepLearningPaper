@@ -36,12 +36,6 @@ def test_model(model,dataloader,epoch):
     return accuracy_list, precision_list, recall_list
 
 
-def model_auprc():
-    return None
-
-def model_auroc():
-    return None
-
 if __name__ == "__main__":
     device = torch.device(3)
     model = load_model("SeFT_01.pt").cuda(device)
