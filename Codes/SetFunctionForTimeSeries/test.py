@@ -8,11 +8,13 @@ from dataloader import *
 from torch.utils.data import DataLoader,Dataset
 from models.metrics import *
 
-def model_accuracy(model,dataloader,epoch):
+def test_model(model,dataloader,epoch):
     start = time.time()
     is_cuda = torch.cuda.is_available()
     device = torch.device(3)
     accuracy_list = []
+    precision_list = []
+    recall_list = []
 
     for k in range(epoch):
         with torch.no_grad():
@@ -25,11 +27,13 @@ def model_accuracy(model,dataloader,epoch):
                     target = target.float().cuda(device)
         
                 y_hat = model(x,n)
-                accuracy, _, _, _ = confuse_matrix(target,y_hat)
+                accuracy, precision, recall, f1 = confuse_matrix(target,y_hat)
                 accuracy = accuracy * 100
                 accuracy_list.append(accuracy)
+                precision_list.append(round(precision,2))
+                recall_list.append(round(recall,2))
 
-    return accuracy_list
+    return accuracy_list, precision_list, recall_list
 
 
 def model_auprc():
@@ -46,5 +50,10 @@ if __name__ == "__main__":
     dataset_b = MyDataLoader(df_b,1024)
     dataloader_b = DataLoader(dataset_b, shuffle=False, batch_size=256,drop_last=True)
     
-    accuracy_list = model_accuracy(model,dataloader_b,20)
+    accuracy_list, precision_list, recall_list = test_model(model,dataloader_b,20)
+    print('+========== accuracy_list ==========+')
     print(accuracy_list)
+    print('+========== precision_list ==========+')
+    print(precision_list)
+    print('+========== recall_list ==========+')
+    print(recall_list)
