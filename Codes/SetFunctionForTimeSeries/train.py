@@ -30,12 +30,12 @@ def train_model(model,dataloader,epoch):
         for i,data in enumerate(dataloader):
             count += 1
             x, n, target = data
-            '''
+            
             if is_cuda:
                 x = x.float().cuda()
-                #n = n.float().cuda()
+                n = n.float().cuda()
                 target = target.float().cuda()
-            '''
+            
             optimizer.zero_grad()
             y_hat = model(x,n)
             print(y_hat.shape)
@@ -59,7 +59,7 @@ def train_model(model,dataloader,epoch):
 
 if __name__ == '__main__':
     #model = Transformer().cuda()
-    model = SeFT()
+    model = SeFT().cuda()
     df = pd.read_csv('/daintlab/data/sr/paper/setfunction/tensorflow_datasets/root/tensorflow_datasets/downloads/extracted/A/set-a/A-dataset.csv')
     dataset = MyDataLoader(df,1024)
     dataloader = DataLoader(dataset, shuffle=False, batch_size=64)

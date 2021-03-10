@@ -39,9 +39,11 @@ class SeFT(nn.Module):
         e = self.attention(e,n,x)
         # ▼ decoding process
         e = e.view(e.shape[0],-1)
-        e = self.relu1(self.fc1(e))
+        e = self.fc1(e)
+        e = self.relu1(e)
         e = self.dropout(e)
-        e = self.relu2(self.fc2(e))
+        e = self.fc2(e)
+        e = self.relu2(e)
         e = self.fc3(e)
         y = self.sigmoid(e)
         return y
@@ -120,23 +122,36 @@ class Attention(nn.Module):
         self.r_asterisk = []
     
     def forward(self,f_S,n,x):
+
+        #####
+        is_cuda = torch.cuda.is_available()
+        device = torch.device('cuda' if is_cuda else 'cpu')
+        #####
+
         bs = x.shape[0]
         n_list = n.tolist()
         query = torch.zeros(bs,self.m,self.d)
+        if is_cuda:
+            query = query.float().to(device)
         for i in range(self.m):
             matrix = torch.zeros(bs,1024,5)
             matrix[0:,0:,0:2] = f_S.view(bs,1,2)
             matrix[0:,0:,2:] = x
             weight = torch.randn(5,self.d)
+            r_i = torch.zeros(64,128)
+            if is_cuda:
+                matrix = matrix.float().to(device)
+                weight = weight.float().to(device)
+                r_i = r_i.float().to(device)
             key = torch.matmul(matrix,weight)
             e_ji = torch.sum(key[0:,0:,0:]*query[0:,0,0:].view(64,1,128),2).view(bs,1024,1)/np.sqrt(self.d)
             for j in range(bs): # Masking
-                length = n_list[j][0]
+                length = int(n_list[j][0])
                 e_ji[j,length:,0] = -1000.0
             a_ji = self.softmax(e_ji) # [64,1024,1]
             h_s = self.h_list[i](x) # [64,128]
-            # r_i 만들기
-            r_i = torch.zeros(64,128)
+            
+            # r_i 연산하기
             for k in range(bs):
                 temp = torch.sum(e_ji[i]*h_s[i],dim=0)
                 r_i[i] = temp
@@ -159,7 +174,10 @@ if __name__ == '__main__':
     dataset = MyDataLoader(df,1024)
     dataloader = DataLoader(dataset, shuffle=False, batch_size=64, pin_memory=False)
     x, n, target = next(iter(dataloader))
+    x = x.float().cuda()
+    n = n.float().cuda()
+    target = target.float().cuda()
     
-    model = SeFT()
+    model = SeFT().cuda()
     y = model(x,n)
     print(y)
