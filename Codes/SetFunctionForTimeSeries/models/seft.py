@@ -154,16 +154,19 @@ class Attention(nn.Module):
             e_ji[j,length:,0] = -1000.0
         a_ji = self.softmax(e_ji) # [64,1024,1]
         h_s = self.h(x) # [64,128]
-        print(a_ji.shape,h_s.shape)
             
-        # r_i 연산하기
+        # calculate sum(a_ji*h_s) = r_i
         for k in range(bs):
             temp = torch.sum(a_ji[k]*h_s[k],dim=0)
             r_i[k] = temp
 
         return r_i
 
-""" class Attention above this is more clear and works well
+""" 
+############
+class Attention above this is more clear and works well
+############
+
 class Attention(nn.Module):
     def __init__(self,m=4,d=128):
         super().__init__()

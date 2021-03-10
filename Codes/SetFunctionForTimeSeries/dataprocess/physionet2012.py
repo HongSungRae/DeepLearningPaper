@@ -88,10 +88,12 @@ def txt_to_csv(folder,target,filename):
             S_i.append(s_i)
         
             
-    
-        y = target_y[target_ID.index(ID)]
-        df.at[i,'S'] = S_i
-        df.loc[i,'y'] = y
+        if (len(S_i)>=3) and (len(S_i)<=1024):
+            y = target_y[target_ID.index(ID)]
+            df.at[i,'S'] = S_i
+            df.loc[i,'y'] = y
+        else:
+            continue
     
     df.to_csv(folder + filename + ".csv",header=True,index=True)
     print('=== Done ! ===')
@@ -102,5 +104,5 @@ def txt_to_csv(folder,target,filename):
 if __name__=='__main__':
     #get_length()
     txt_to_csv(A_root+'/set-a/',A_root+'/Outcomes-a.csv','A-dataset')
-    txt_to_csv(B_root+'/set-b/',B_root+'/Outcomes-b.csv','B-dataset')
-    txt_to_csv(C_root+'/set-c/',C_root+'/Outcomes-c.csv','C-dataset')
+    #txt_to_csv(B_root+'/set-b/',B_root+'/Outcomes-b.csv','B-dataset')
+    #txt_to_csv(C_root+'/set-c/',C_root+'/Outcomes-c.csv','C-dataset')

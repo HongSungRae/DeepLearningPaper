@@ -18,6 +18,7 @@ class MyDataLoader(Dataset):
     def __getitem__(self,index):
         temp_x = self.df.iloc[index,1] #str
         temp_x = eval(temp_x) # '[(),(),()]' -> eval -> [(),(),()]
+        #print(index, len(temp_x))
         temp_x = torch.FloatTensor(temp_x)
         #temp_x = torch.tensor(temp_x,dtype=torch.float, requires_grad=True)
         n = torch.tensor(len(temp_x)).view(-1)

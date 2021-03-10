@@ -38,21 +38,24 @@ def train_model(model,dataloader,epoch):
             
             optimizer.zero_grad()
             y_hat = model(x,n)
-            print(y_hat.shape)
+
             loss = criterion(y_hat.float(),target.float()) # hat이 먼저 target이 나중에 와야한다
             loss_learning += loss
             sum_loss += loss
             torch.autograd.set_detect_anomaly(True)
             loss.backward(retain_graph=True)
             optimizer.step()
-           
+
+            del x
+            torch.cuda.empty_cache()
+
             if i % 10 == 9:    # print every 10 mini-batches
                 print('[epoch : %d, iter : %5d] loss: %.3f' %
                       (eph + 1, i + 1, loss_learning / 10))
-                print(torch.sum(model.linear2.weight))
+                print(torch.sum(model.fc3.weight))
                 loss_learning = 0.0
         else:
-            train_loss_list.append(round(sum_loss/count,5))
+            train_loss_list.append(sum_loss/count)
     return model, train_loss_list
 
 
@@ -62,7 +65,7 @@ if __name__ == '__main__':
     model = SeFT().cuda()
     df = pd.read_csv('/daintlab/data/sr/paper/setfunction/tensorflow_datasets/root/tensorflow_datasets/downloads/extracted/A/set-a/A-dataset.csv')
     dataset = MyDataLoader(df,1024)
-    dataloader = DataLoader(dataset, shuffle=False, batch_size=64)
+    dataloader = DataLoader(dataset, shuffle=False, batch_size=64,drop_last=True)
 
     trained_model, train_loss_list = train_model(model,dataloader,30)
     print(train_loss_list)
