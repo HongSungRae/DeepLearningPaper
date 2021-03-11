@@ -38,13 +38,13 @@ def test_model(model,dataloader,epoch):
 
 if __name__ == "__main__":
     device = torch.device(3)
-    model = load_model("SeFT_01.pt").cuda(device)
+    model = load_model("SeFT_02.pt").cuda(device)
     PATH = '/daintlab/data/sr/paper/setfunction/tensorflow_datasets/root/tensorflow_datasets/downloads/extracted/'
-    df_b = pd.read_csv(PATH + 'B/set-b/B-dataset.csv')
-    dataset_b = MyDataLoader(df_b,1024)
-    dataloader_b = DataLoader(dataset_b, shuffle=False, batch_size=256,drop_last=True)
+    df_c = pd.read_csv(PATH + 'C/set-c/C-dataset.csv')
+    dataset_c = MyDataLoader(df_c,1024)
+    dataloader_c = DataLoader(dataset_c, shuffle=False, batch_size=256,drop_last=True)
     
-    accuracy_list, precision_list, recall_list = test_model(model,dataloader_b,20)
+    accuracy_list, precision_list, recall_list = test_model(model,dataloader_c,10)
     print('+========== accuracy_list ==========+')
     print(accuracy_list)
     print('+========== precision_list ==========+')
