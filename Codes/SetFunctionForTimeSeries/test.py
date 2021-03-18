@@ -3,7 +3,7 @@ import pandas as pd
 import time
 import torch
 import torch.nn as nn
-from utils import load_model
+from utils import load_model,load_data
 from dataloader import *
 from torch.utils.data import DataLoader,Dataset
 from models.metrics import *
@@ -36,11 +36,13 @@ def test_model(model,dataloader,epoch):
     return accuracy_list, precision_list, recall_list
 
 
+def get_dataloader(bs=64):
+    test_df = load_data(forwhat=True)#test df
+    dataset = MyDataLoader(test_df,1024)
+    dataloader = DataLoader(dataset, shuffle=False, batch_size=bs,drop_last=True)
+    return dataloader
+
 if __name__ == "__main__":
-    device = torch.device(3)
-    model = load_model("SeFT_02.pt").cuda(device)
-    PATH = '/daintlab/data/sr/paper/setfunction/tensorflow_datasets/root/tensorflow_datasets/downloads/extracted/'
-    df_c = pd.read_csv(PATH + 'C/set-c/C-dataset.csv')
     dataset_c = MyDataLoader(df_c,1024)
     dataloader_c = DataLoader(dataset_c, shuffle=False, batch_size=256,drop_last=True)
     

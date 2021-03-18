@@ -62,38 +62,22 @@ def train_model(model,dataloader,epoch):
     return model, train_loss_list
 
 
-def train_and_save(model,dataloader,epoch,save_name):
+def train_and_save(model,epoch,save_name):
+    train_df = load_data()
+    train_dataset = MyDataLoader(train_df,1024)
+    train_dataloader = DataLoader(train_dataset, shuffle=False, batch_size=256,drop_last=True)
+
+    trained_model, train_loss_list = train_model(model,train_dataloader,epoch)
     PATH = '/daintlab/data/sr/paper/setfunction/trained_models/'
-    trained_model, train_loss_list = train_model(model,dataloader,epoch)
     torch.save(trained_model, PATH + save_name)
     return train_loss_list
 
+
+
 if __name__ == '__main__':
-    #model = Transformer().cuda()
     device = torch.device(3)
+    #model = Transformer().cuda(device)
     model = SeFT().cuda(device)
 
-    PATH = '/daintlab/data/sr/paper/setfunction/tensorflow_datasets/root/tensorflow_datasets/downloads/extracted/'
-
-
-    '''
-    """ train A Set """
-    ##################
-    df_a = pd.read_csv(PATH + 'A/set-a/A-dataset.csv')
-    dataset_a = MyDataLoader(df_a,1024)
-    dataloader_a = DataLoader(dataset_a, shuffle=False, batch_size=64,drop_last=True)
-    train_loss_list = train_and_save(model,dataloader_a,30,"SeFT_01.pt")
+    train_loss_list = train_and_save(model,50,"SeFT_03.pt")
     print(train_loss_list)
-    ##################
-    """            """
-    '''
-    """ train B Set """
-    ##################
-    df_b = pd.read_csv(PATH + 'B/set-b/B-dataset.csv')
-    dataset_b = MyDataLoader(df_b,1024)
-    dataloader_b = DataLoader(dataset_b, shuffle=False, batch_size=64,drop_last=True)
-    model = load_model('SeFT_01.pt').cuda(device)
-    train_loss_list = train_and_save(model,dataloader_b,30,"SeFT_02.pt")
-    print(train_loss_list)
-    ##################
-    """            """

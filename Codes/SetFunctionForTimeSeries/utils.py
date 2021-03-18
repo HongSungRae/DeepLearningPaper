@@ -17,6 +17,20 @@ def load_model(model_name):
     model.eval()
     return model
 
+
+def load_data(forwhat=False):
+    PATH = '/daintlab/data/sr/paper/setfunction/tensorflow_datasets/root/tensorflow_datasets/downloads/extracted/'
+    df_a = pd.read_csv(PATH + 'A/set-a/A-dataset.csv')
+    df_b = pd.read_csv(PATH + 'B/set-b/B-dataset.csv')
+    df_c = pd.read_csv(PATH + 'C/set-c/C-dataset.csv')
+    full_df = pd.concat([df_a,df_b,df_c])
+    del df_a,df_b,df_c    
+    train_size = int(0.8 * len(full_df))
+    if forwhat==False:#train dataset
+        return full_df[0:train_size]
+    else:#test dataset
+        return full_df[train_size:]
+
 if __name__ == '__main__':
     print(torch.__version__)
     cuda_checker()

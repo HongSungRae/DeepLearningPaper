@@ -13,20 +13,20 @@ should be calculated
 metrics.py contains this kinds of metrics
 """
 
-def get_1_or_0(y_hat):
+def neg_or_pos(y_hat,threshold):
     bs = y_hat.shape[0]
     for i in range(bs):
-        if y_hat[i] > 0.5:
+        if y_hat[i] > threshold:
             y_hat[i] = 1.0
         else:
             y_hat[i] = 0.0
     return y_hat
 
 
-def confuse_matrix(y,y_hat):
+def confuse_matrix(y,y_hat,threshold=0.5):
     bs = y.shape[0]
     correct = 0
-    y_hat = get_1_or_0(y_hat)
+    y_hat = neg_or_pos(y_hat,threshold)
     tp = 0
     tn = 0
     fp = 0
@@ -42,7 +42,6 @@ def confuse_matrix(y,y_hat):
             tn += 1
         else:
             fp += 1
-    #print(tp,tn,fp,fn,tp+tn+fp+fn)
     eps = 1e-3
     accuracy = (tp+tn)/bs
     precision = tp/(tp+fp+eps)
@@ -64,12 +63,48 @@ def auprc(precision,recall):
     return precision_list, recall_list
 
 
-def auroc(y,y_hat):
-    bs = y.shape[0]
-    return None
+def roc(y,y_hat):
+    assert y.shape==y_hat.shape
+
+    FPR = []
+    TPR = []
+    y = neg_or_pos(y,0.5)
+    y = y.view(y.shape[0]).tolist()
+    y_hat = y_hat.view(y_hat.shape[0]).tolist() # it returns probabilities
+    df = pd.DataFrame(data={'y':y,'y_hat':y_hat})
+    df = df.sort_values(['y_hat'],ascending=[False]) # 내림차순
+    eps = 10e-3
+    P = len(df[df['y']==1.0]) + eps
+    N = len(df[df['y']==0.0]) + eps
+    for i in df['y_hat']:
+        tmp_p = df[df['y_hat'] >= i]
+        TP = len(tmp_p[tmp_p['y'] == 1.0])
+        tmp_TPR = TP/P
+        tmp_n = df[df['y_hat'] >= i]
+        FP = len(tmp_n[tmp_n['y'] == 0.0])
+        tmp_FPR = FP/N
+        TPR.append(tmp_TPR)
+        FPR.append(tmp_FPR)
+    return TPR, FPR
+
+
+def auroc(TPR,FPR,ret_list=False):
+    score = 0
+    TPR = [0] + TPR + [1]
+    FPR = [0] + FPR + [1]
+    for i in range(len(TPR)-1):
+        temp = (TPR[i]+TPR[i+1])*(FPR[i+1]-FPR[i])/2
+        score += temp
+    if ret_list==True:
+        return TPR,FPR,score
+    else:
+        return score
 
 
 if  __name__ == "__main__":
     y = torch.ones(64,1)
     y_hat = torch.randn(64,1)
-    print(accuracy(y,y_hat))
+    TPR, FPR = roc(y,y_hat)
+    TPR,FPR,score = auroc(TPR,FPR,True)
+    print(score) # in this dummy setting, outcomes would be absolutely same whenever you run the code
+                 # because all dummy target == 1.0(true)

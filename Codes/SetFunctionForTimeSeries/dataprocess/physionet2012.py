@@ -3,6 +3,7 @@ import numpy as np
 import os
 import time as t
 from utils import time_encoding
+import torch.utils.data
 
 root = '/daintlab/data/sr/paper/setfunction/tensorflow_datasets/root/tensorflow_datasets/downloads/extracted/'
 A_root = root + 'A'
@@ -101,9 +102,26 @@ def txt_to_csv(folder,target,filename):
     print('Time taken : {}'.format(t.time()-start))
             
 
+def train_test_split():
+    PATH = '/daintlab/data/sr/paper/setfunction/tensorflow_datasets/root/tensorflow_datasets/downloads/extracted'
+    df_a = pd.read_csv(PATH + '/A/set-a/A-dataset.csv')
+    df_b = pd.read_csv(PATH + '/B/set-b/B-dataset.csv')
+    df_c = pd.read_csv(PATH + '/C/set-c/C-dataset.csv')
+    full_df = pd.concat([df_a,df_b,df_c])
+    del df_a
+    del df_b
+    del df_c
+    train_size = int(0.8 * len(full_df))
+    train_df = full_df[0:train_size]
+    test_df = full_df[train_size:]
+    train_df.to_csv('Z:\\daintlab\\data\sr\\paper\\setfunction\\tensorflow_datasets\\root\\tensorflow_datasets\\downloads\\extracted')
+    test_df.to_csv('Z:\\daintlab\\data\sr\\paper\\setfunction\\tensorflow_datasets\\root\\tensorflow_datasets\\downloads\\extracted')
+    print("DataFrames were saved")
+
 
 if __name__=='__main__':
     #get_length()
     #txt_to_csv(A_root+'/set-a/',A_root+'/Outcomes-a.csv','A-dataset')
     #txt_to_csv(B_root+'/set-b/',B_root+'/Outcomes-b.csv','B-dataset')
-    txt_to_csv(C_root+'/set-c/',C_root+'/Outcomes-c.csv','C-dataset')
+    #txt_to_csv(C_root+'/set-c/',C_root+'/Outcomes-c.csv','C-dataset')
+    train_test_split()
