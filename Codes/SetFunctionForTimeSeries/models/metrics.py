@@ -23,6 +23,7 @@ def neg_or_pos(y_hat,threshold):
     return y_hat
 
 
+
 def confuse_matrix(y,y_hat,threshold=0.5):
     bs = y.shape[0]
     correct = 0
@@ -47,20 +48,35 @@ def confuse_matrix(y,y_hat,threshold=0.5):
     precision = tp/(tp+fp+eps)
     recall = tp/(tp+fn+eps)
     f1 = 2*(precision*recall)/(precision+recall+eps)
+    #print(tp,tn,fp,fn)
     return accuracy, precision, recall, f1
 
 
-def auprc(precision,recall):
-    """
-    plz input precision and recall as list form.
-    """
-    auprc_precision = [0] + precision
-    auprc_recall = [0] + recall
-    auprc = 0
-    for i in range(1, len(auprc_precision)):
-        temp_auprc = (auprc_Precision[i - 1] + auprc_precision[i]) * (auprc_recall[i] - auprc_recall[i - 1]) / 2
-        auprc += temp_auprc
-    return precision_list, recall_list
+def prc(y,y_hat):
+    assert y.shape==y_hat.shape
+    precision = []
+    recall = []
+    temp_y_hat = y_hat.view(y_hat.shape[0]).tolist() # it returns probabilities
+    temp_y_hat.sort(reverse=True)
+    for i in temp_y_hat:
+        _,p,r,_ = confuse_matrix(y,y_hat,threshold=i)
+        precision.append(p)
+        recall.append(r)
+    return precision,recall
+
+
+
+def auprc(precision,recall,ret_list=False):
+    score = 0
+    for i in range(len(recall)-1):
+        temp = (recall[i+1]-recall[i])*(precision[i]+precision[i+1])/2
+        score += temp
+    if ret_list==True:
+        return precision,recall,score
+    else:
+        return score
+
+
 
 
 def roc(y,y_hat):
@@ -108,3 +124,4 @@ if  __name__ == "__main__":
     TPR,FPR,score = auroc(TPR,FPR,True)
     print(score) # in this dummy setting, outcomes would be absolutely same whenever you run the code
                  # because all dummy target == 1.0(true)
+    print(TPR,FPR)

@@ -12,9 +12,10 @@ def test_model(model,dataloader,epoch):
     start = time.time()
     is_cuda = torch.cuda.is_available()
     device = torch.device(3)
-    accuracy_list = []
-    precision_list = []
-    recall_list = []
+    criterion = nn.BCELoss()
+    ACCURACY = []
+    AUROC = []
+    AUPRC = []
 
     for k in range(epoch):
         with torch.no_grad():
@@ -27,14 +28,23 @@ def test_model(model,dataloader,epoch):
                     target = target.float().cuda(device)
         
                 y_hat = model(x,n)
-                accuracy, precision, recall, f1 = confuse_matrix(target,y_hat)
-                accuracy = accuracy * 100
-                accuracy_list.append(accuracy)
-                precision_list.append(round(precision,2))
-                recall_list.append(round(recall,2))
+                loss = criterion(y_hat.float(),target.float())
+                print(loss.item())
+                accuracy,_,_,_ = confuse_matrix(target,y_hat)
+                TPR ,FPR = roc(target,y_hat)
+                auroc_score = auroc(TPR,FPR)
+                PRECISION, RECALL = prc(target,y_hat)
+                auprc_score = auprc(PRECISION,RECALL)
+                ACCURACY.append(accuracy)
+                AUROC.append(auroc_score)
+                AUPRC.append(auprc_score)
+            else:
+                print(TPR,FPR)
+            
+    return ACCURACY,AUROC,AUPRC
 
-    return accuracy_list, precision_list, recall_list
-
+def analysis(ACCURACY,AUROC,AUPRC):
+    pass
 
 def get_dataloader(bs=64):
     test_df = load_data(forwhat=True)#test df
@@ -43,13 +53,12 @@ def get_dataloader(bs=64):
     return dataloader
 
 if __name__ == "__main__":
-    dataset_c = MyDataLoader(df_c,1024)
-    dataloader_c = DataLoader(dataset_c, shuffle=False, batch_size=256,drop_last=True)
-    
-    accuracy_list, precision_list, recall_list = test_model(model,dataloader_c,10)
-    print('+========== accuracy_list ==========+')
-    print(accuracy_list)
-    print('+========== precision_list ==========+')
-    print(precision_list)
-    print('+========== recall_list ==========+')
-    print(recall_list)
+    device = torch.device(3)
+    model = load_model('SeFT_03.pt').cuda(device)
+    dataloader = get_dataloader()
+    ACCURACY, AUROC, AUPRC = test_model(model,dataloader,1)
+
+    print('+========== AUROC_list ==========+')
+    print(AUROC)
+    print('+========== AUPRC_list ==========+')
+    print(AUPRC)
