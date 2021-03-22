@@ -4,6 +4,7 @@ import time
 import torch
 import torch.nn as nn
 from torchmetrics.functional import accuracy,auroc
+#from metrics import *
 from utils import load_model,load_data
 from dataloader import *
 from torch.utils.data import DataLoader,Dataset
@@ -13,9 +14,6 @@ def test_model(model,dataloader,epoch):
     start = time.time()
     is_cuda = torch.cuda.is_available()
     device = torch.device(3)
-    ACCURACY = []
-    AUROC = []
-    AUPRC = []
 
     for k in range(epoch):
         with torch.no_grad():
@@ -26,7 +24,7 @@ def test_model(model,dataloader,epoch):
                     n = n.float().cuda(device)
                     target = target.float().cuda(device)
                 y_hat = model(x,n)
-
+            else:
                 '''using torchmetrics'''
                 accuracy_score = accuracy(y_hat,target.long())
                 auroc_score = auroc(y_hat,target.long(),pos_label=1)
@@ -38,13 +36,8 @@ def test_model(model,dataloader,epoch):
                 #auroc_score = auroc(TPR,FPR)
                 #PRECISION, RECALL = prc(target,y_hat)
                 #auprc_score = auprc(PRECISION,RECALL)
-
-                
-                ACCURACY.append(accuracy_score.item())
-                AUROC.append(auroc_score.item())
-                #AUPRC.append(auprc_score)
             
-    return ACCURACY,AUROC,AUPRC
+    return accuracy_score, auroc_score, auprc_score
 
 def analysis(ACCURACY,AUROC,AUPRC):
     pass
@@ -52,7 +45,7 @@ def analysis(ACCURACY,AUROC,AUPRC):
 def get_dataloader(bs=64):
     test_df = load_data(forwhat=True)#test df
     dataset = MyDataLoader(test_df,1024)
-    dataloader = DataLoader(dataset, shuffle=False, batch_size=bs,drop_last=True)
+    dataloader = DataLoader(dataset, shuffle=False, batch_size=len(dataset),drop_last=True)
     return dataloader
 
 if __name__ == "__main__":

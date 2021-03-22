@@ -24,7 +24,7 @@ def neg_or_pos(y_hat,threshold):
 
 
 
-def confuse_matrix(y,y_hat,threshold=0.5):
+def confusion_matrix(y,y_hat,threshold=0.5):
     bs = y.shape[0]
     correct = 0
     y_hat = neg_or_pos(y_hat,threshold)
@@ -56,18 +56,19 @@ def prc(y,y_hat):
     assert y.shape==y_hat.shape
     precision = []
     recall = []
+    eps = 10e-3
     temp_y_hat = y_hat.view(y_hat.shape[0]).tolist() # it returns probabilities
     temp_y_hat.sort(reverse=True)
     for i in temp_y_hat:
-        _,p,r,_ = confuse_matrix(y,y_hat,threshold=i)
+        _,p,r,_ = confusion_matrix(y,y_hat,i)
         precision.append(p)
         recall.append(r)
     return precision,recall
 
 
 
-def auprc(precision,recall,ret_list=False):
-    score = 0
+def my_auprc(y_hat,y,ret_list=False):
+    precision, recall = prc(y_hat,y)
     for i in range(len(recall)-1):
         temp = (recall[i+1]-recall[i])*(precision[i]+precision[i+1])/2
         score += temp
@@ -104,7 +105,7 @@ def roc(y,y_hat):
     return TPR, FPR
 
 
-def auroc(TPR,FPR,ret_list=False):
+def my_auroc(TPR,FPR,ret_list=False):
     score = 0
     TPR = [0] + TPR + [1]
     FPR = [0] + FPR + [1]
