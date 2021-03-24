@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+from torchmetrics.functional import accuracy,auroc
 
 """
 SeFT model uses BinaryCrossEntropyLoss for training.
@@ -52,54 +53,65 @@ def confusion_matrix(y_hat,y,threshold=0.5):
     return accuracy, precision, recall, f1
 
 
-def prc(y,y_hat):
+def prc(y_hat,y):
     assert y.shape==y_hat.shape
-    precision = []
-    recall = []
-    eps = 10e-3
-    temp_y_hat = y_hat.view(y_hat.shape[0]).tolist() # it returns probabilities
-    temp_y_hat.sort(reverse=True)
-    for i in temp_y_hat:
-        _,p,r,_ = confusion_matrix(y,y_hat,i)
-        precision.append(p)
-        recall.append(r)
-    return precision,recall
+
+    PRECISION = []
+    RECALL = []
+    eps = 10e-8
+
+    y = y.view(y.shape[0]).tolist()
+    y_hat = y_hat.view(y_hat.shape[0]).tolist() # it returns probabilities
+    df = pd.DataFrame(data={'y':y,'y_hat':y_hat})
+    df = df.sort_values(by='y_hat',ascending=False) # 내림차순
+
+    tp = 0
+    P = 0 + eps # denominator of precision. TP + FP
+    R = len(df[df['y']==1]) + eps # denominator of recall. TP + FN
+    for i in df['y_hat']:
+        P += 1
+        temp = df[df['y_hat']>=i]
+        if temp.iloc[-1,0] == 1:
+            tp += 1
+        precision = tp/P
+        recall = tp/R
+        PRECISION.append(precision)
+        RECALL.append(recall)
+    return PRECISION,RECALL
 
 
 
 def my_auprc(y_hat,y,ret_list=False):
-    precision, recall = prc(y_hat,y)
+    PRECISION, RECALL = prc(y_hat,y)
     score = 0
-    for i in range(len(recall)-1):
-        temp = (recall[i+1]-recall[i])*(precision[i]+precision[i+1])/2
+    for i in range(len(RECALL)-1):
+        temp = (RECALL[i+1]-RECALL[i])*(PRECISION[i]+PRECISION[i+1])/2
         score += temp
     if ret_list==True:
-        return precision,recall,score
+        return PRECISION,RECALL,score
     else:
         return score
 
 
 
 
-def roc(y,y_hat):
+def roc(y_hat,y):
     assert y.shape==y_hat.shape
 
     FPR = []
     TPR = []
-    y = neg_or_pos(y,0.5)
     y = y.view(y.shape[0]).tolist()
     y_hat = y_hat.view(y_hat.shape[0]).tolist() # it returns probabilities
     df = pd.DataFrame(data={'y':y,'y_hat':y_hat})
-    df = df.sort_values(['y_hat'],ascending=[False]) # 내림차순
-    eps = 10e-3
+    df = df.sort_values(by='y_hat',ascending=False) # 내림차순
+    eps = 10e-8
     P = len(df[df['y']==1.0]) + eps
     N = len(df[df['y']==0.0]) + eps
     for i in df['y_hat']:
-        tmp_p = df[df['y_hat'] >= i]
-        TP = len(tmp_p[tmp_p['y'] == 1.0])
+        temp = df[df['y_hat'] >= i]
+        TP = len(temp[temp['y'] == 1])
+        FP = len(temp[temp['y'] == 0])
         tmp_TPR = TP/P
-        tmp_n = df[df['y_hat'] >= i]
-        FP = len(tmp_n[tmp_n['y'] == 0.0])
         tmp_FPR = FP/N
         TPR.append(tmp_TPR)
         FPR.append(tmp_FPR)
@@ -107,7 +119,7 @@ def roc(y,y_hat):
 
 
 def my_auroc(y_hat,y,ret_list=False):
-    TPR,FPR = roc(y,y_hat)
+    TPR,FPR = roc(y_hat,y)
     score = 0
     TPR = [0] + TPR + [1]
     FPR = [0] + FPR + [1]
@@ -121,10 +133,12 @@ def my_auroc(y_hat,y,ret_list=False):
 
 
 if  __name__ == "__main__":
-    y = torch.ones(64,1)
+    y = neg_or_pos(torch.randn(64,1),0)
+    sigmoid = nn.Sigmoid()
     y_hat = torch.randn(64,1)
-    TPR, FPR = roc(y,y_hat)
-    TPR,FPR,score = auroc(TPR,FPR,True)
-    print(score) # in this dummy setting, outcomes would be absolutely same whenever you run the code
-                 # because all dummy target == 1.0(true)
-    print(TPR,FPR)
+    y_hat = sigmoid(y_hat)
+
+    TPR, FPR = roc(y_hat,y)
+    print(my_auroc(y_hat,y))
+    print(auroc(y_hat,y.long(),pos_label=1))
+    print(my_auprc(y_hat,y))

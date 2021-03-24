@@ -26,16 +26,19 @@ def test_model(model,dataloader,epoch):
                 y_hat = model(x,n)
             else:
                 '''using torchmetrics'''
-                accuracy_score = accuracy(y_hat,target.long())
+                #accuracy_score = accuracy(y_hat,target.long())
                 auroc_score = auroc(y_hat,target.long(),pos_label=1)
-                #auprc_score = ??
-                print(accuracy_score,auroc_score)
+                auprc_score = 0
+                accuracy_score = 0
+                #print(accuracy_score,auroc_score)
+                print(auroc_score)
 
                 '''using my metrics'''
-                accuracy_score,_,_,_ = metrics.confusion_matrix(y_hat,target)
-                auroc_score = metrics.my_auroc(y_hat,target)
+                #accuracy_score,_,_,_ = metrics.confusion_matrix(y_hat,target)
+                auroc_score = metrics.my_auroc(y_hat,target.long())
                 auprc_score = metrics.my_auprc(y_hat,target)
-                print(accuracy_score,auroc_score,auprc_score)
+                #print(accuracy_score,auroc_score,auprc_score)
+                print(auroc_score)
             
     return accuracy_score, auroc_score, auprc_score
 
@@ -54,9 +57,9 @@ if __name__ == "__main__":
     dataloader = get_dataloader()
     ACCURACY, AUROC, AUPRC = test_model(model,dataloader,1)
     
-    print('+========== ACCURACY_list ==========+')
+    print('+========== ACCURACY ==========+')
     print(ACCURACY)
-    print('+========== AUROC_list ==========+')
+    print('+========== AUROC ==========+')
     print(AUROC)
-    print('+========== AUPRC_list ==========+')
+    print('+========== AUPRC ==========+')
     print(AUPRC)

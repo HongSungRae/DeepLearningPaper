@@ -39,4 +39,4 @@ if __name__ == '__main__':
     x, n, target = next(iter(dataloader))
     print("x.shape :",x.shape)
     print("n :",n.shape)
-    print("target :",target.shape)
+    print("target :",target)
