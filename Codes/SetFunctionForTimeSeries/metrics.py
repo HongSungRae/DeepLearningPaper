@@ -16,7 +16,7 @@ metrics.py contains this kinds of metrics
 def neg_or_pos(y_hat,threshold):
     bs = y_hat.shape[0]
     for i in range(bs):
-        if y_hat[i] > threshold:
+        if y_hat[i] >= threshold:
             y_hat[i] = 1.0
         else:
             y_hat[i] = 0.0
@@ -24,7 +24,7 @@ def neg_or_pos(y_hat,threshold):
 
 
 
-def confusion_matrix(y,y_hat,threshold=0.5):
+def confusion_matrix(y_hat,y,threshold=0.5):
     bs = y.shape[0]
     correct = 0
     y_hat = neg_or_pos(y_hat,threshold)
@@ -69,6 +69,7 @@ def prc(y,y_hat):
 
 def my_auprc(y_hat,y,ret_list=False):
     precision, recall = prc(y_hat,y)
+    score = 0
     for i in range(len(recall)-1):
         temp = (recall[i+1]-recall[i])*(precision[i]+precision[i+1])/2
         score += temp
@@ -105,7 +106,8 @@ def roc(y,y_hat):
     return TPR, FPR
 
 
-def my_auroc(TPR,FPR,ret_list=False):
+def my_auroc(y_hat,y,ret_list=False):
+    TPR,FPR = roc(y,y_hat)
     score = 0
     TPR = [0] + TPR + [1]
     FPR = [0] + FPR + [1]

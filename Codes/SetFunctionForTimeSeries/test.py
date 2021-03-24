@@ -4,7 +4,7 @@ import time
 import torch
 import torch.nn as nn
 from torchmetrics.functional import accuracy,auroc
-#from metrics import *
+import metrics
 from utils import load_model,load_data
 from dataloader import *
 from torch.utils.data import DataLoader,Dataset
@@ -29,13 +29,13 @@ def test_model(model,dataloader,epoch):
                 accuracy_score = accuracy(y_hat,target.long())
                 auroc_score = auroc(y_hat,target.long(),pos_label=1)
                 #auprc_score = ??
+                print(accuracy_score,auroc_score)
 
                 '''using my metrics'''
-                #accuracy,_,_,_ = confuse_matrix(target,y_hat)
-                #TPR ,FPR = roc(target,y_hat)
-                #auroc_score = auroc(TPR,FPR)
-                #PRECISION, RECALL = prc(target,y_hat)
-                #auprc_score = auprc(PRECISION,RECALL)
+                accuracy_score,_,_,_ = metrics.confusion_matrix(y_hat,target)
+                auroc_score = metrics.my_auroc(y_hat,target)
+                auprc_score = metrics.my_auprc(y_hat,target)
+                print(accuracy_score,auroc_score,auprc_score)
             
     return accuracy_score, auroc_score, auprc_score
 
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     model = load_model('SeFT_03.pt').cuda(device)
     dataloader = get_dataloader()
     ACCURACY, AUROC, AUPRC = test_model(model,dataloader,1)
-
+    
     print('+========== ACCURACY_list ==========+')
     print(ACCURACY)
     print('+========== AUROC_list ==========+')
