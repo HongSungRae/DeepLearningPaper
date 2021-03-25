@@ -25,7 +25,7 @@ def load_data(forwhat=False):
     df_b = pd.read_csv(PATH + 'B/set-b/B-dataset.csv')
     df_c = pd.read_csv(PATH + 'C/set-c/C-dataset.csv')
     full_df = pd.concat([df_a,df_b,df_c])
-    del df_a,df_b,df_c    
+    del df_a,df_b,df_c
     train_size = int(0.8 * len(full_df))
     if forwhat==False:#train dataset
         return full_df[0:train_size]
